@@ -6,9 +6,9 @@ from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import RobustScaler
 from sklearn.utils import check_random_state
 
-from recursive_jet.preprocessing import permute_by_pt
-from recursive_jet.preprocessing import rotate
-from recursive_jet.recnn import grnn_predict_gated
+from recnn.preprocessing import permute_by_pt
+from recnn.preprocessing import rotate
+from recnn.recnn import grnn_predict_gated
 
 rng = check_random_state(1)
 logging.basicConfig(level=logging.INFO,
