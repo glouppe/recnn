@@ -1,7 +1,9 @@
 import autograd as ag
+import copy
 import numpy as np
 import logging
 import pickle
+import sys
 
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import roc_auc_score
@@ -15,6 +17,15 @@ from recnn.recnn import adam
 from recnn.recnn import grnn_init_gated
 from recnn.recnn import grnn_predict_gated
 
+
+if len(sys.argv) != 3:
+    print("Usage: python train.py train-data.pickle output-model.pickle")
+    sys.exit(1)
+else:
+    filename_train = sys.argv[1]
+    filename_model = sys.argv[2]
+
+
 rng = check_random_state(1)
 logging.basicConfig(level=logging.INFO,
                     format="[%(asctime)s %(levelname)s] %(message)s")
@@ -23,13 +34,12 @@ logging.basicConfig(level=logging.INFO,
 # Make data -------------------------------------------------------------------
 logging.info("Loading data...")
 
-filename = "data/z/kt-train.pickle"
-fd = open(filename, "rb")
+fd = open(filename_train, "rb")
 X, y = pickle.load(fd)
 fd.close()
 y = np.array(y)
 
-logging.info("\tfilename = %s" % filename)
+logging.info("\tfilename = %s" % filename_train)
 logging.info("\tX size = %d" % len(X))
 logging.info("\ty size = %d" % len(y))
 
@@ -72,6 +82,8 @@ predict = grnn_predict_gated
 init = grnn_init_gated
 trained_params = init(n_features, n_hidden, random_state=rng)
 n_batches = int(np.ceil(len(X_train) / batch_size))
+best_score = -np.inf
+best_params = trained_params
 
 
 def loss(X, y, params):
@@ -88,13 +100,28 @@ def objective(params, iteration):
 
 
 def callback(params, iteration, gradient):
+    global best_score
+    global best_params
+
     if iteration % 25 == 0:
+        roc_auc = roc_auc_score(y_valid, predict(params, X_valid))
+
+        if roc_auc > best_score:
+            best_score = roc_auc
+            best_params = copy.deepcopy(params)
+
+            fd = open(filename_model, "wb")
+            pickle.dump(best_params, fd)
+            fd.close()
+
         logging.info(
-            "%5d\tloss(train)=%.4f\tloss(valid)=%.4f\troc_auc(valid)=%.4f" % (
+            "%5d\tloss(train)=%.4f\tloss(valid)=%.4f"
+            "\troc_auc(valid)=%.4f\tbest_roc_auc(valid)=%.4f" % (
                 iteration,
                 loss(X_train[:5000], y_train[:5000], params),
                 loss(X_valid, y_valid, params),
-                roc_auc_score(y_valid, predict(params, X_valid))))
+                roc_auc,
+                best_score))
 
 
 for i in range(n_epochs):
@@ -107,5 +134,3 @@ for i in range(n_epochs):
                           num_iters=1 * n_batches,
                           callback=callback)
     step_size = step_size * decay
-
-# save params

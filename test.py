@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 import pickle
+import sys
 
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import RobustScaler
@@ -10,6 +11,16 @@ from recnn.preprocessing import permute_by_pt
 from recnn.preprocessing import rotate
 from recnn.recnn import grnn_predict_gated
 
+
+if len(sys.argv) != 4:
+    print("Usage: python test.py train-data.pickle test-data.pickle model.pickle")
+    sys.exit(1)
+else:
+    filename_train = sys.argv[1]
+    filename_test = sys.argv[2]
+    filename_model = sys.argv[3]
+
+
 rng = check_random_state(1)
 logging.basicConfig(level=logging.INFO,
                     format="[%(asctime)s %(levelname)s] %(message)s")
@@ -18,13 +29,12 @@ logging.basicConfig(level=logging.INFO,
 # Make training data ----------------------------------------------------------
 logging.info("Loading training data...")
 
-filename = "data/w-vs-qcd/kt-train.pickle"
-fd = open(filename, "rb")
+fd = open(filename_train, "rb")
 X, y = pickle.load(fd)
 fd.close()
 y = np.array(y)
 
-logging.info("\tfilename = %s" % filename)
+logging.info("\tfilename = %s" % filename_train)
 logging.info("\tX size = %d" % len(X))
 logging.info("\ty size = %d" % len(y))
 
@@ -41,13 +51,12 @@ for jet in X:
 # Make test data -------------------------------------------------------------
 logging.info("Loading test data...")
 
-filename = "data/w-vs-qcd/kt-test.pickle"
-fd = open(filename, "rb")
+fd = open(filename_test, "rb")
 X, y = pickle.load(fd)
 fd.close()
 y = np.array(y)
 
-logging.info("\tfilename = %s" % filename)
+logging.info("\tfilename = %s" % filename_test)
 logging.info("\tX size = %d" % len(X))
 logging.info("\ty size = %d" % len(y))
 
@@ -63,9 +72,11 @@ for jet in X:
 # Loading model ---------------------------------------------------------------
 logging.info("Loading model...")
 
-fd = open("models/w-vs-qcd-params.pickle", "rb")
+fd = open(filename_model, "rb")
 params = pickle.load(fd)
 fd.close()
+
+logging.info("\tfilename = %s" % filename_model)
 
 
 # Testing ---------------------------------------------------------------
