@@ -19,7 +19,7 @@ from recnn.recnn import grnn_predict_gated
 
 
 if len(sys.argv) != 3:
-    print("Usage: python train.py train-data.pickle output-model.pickle")
+    print("Usage: python train.py train-data.pickle model.pickle")
     sys.exit(1)
 else:
     filename_train = sys.argv[1]
@@ -115,7 +115,7 @@ def callback(params, iteration, gradient):
             fd.close()
 
         logging.info(
-            "%5d\tloss(train)=%.4f\tloss(valid)=%.4f"
+            "%5d\t~loss(train)=%.4f\tloss(valid)=%.4f"
             "\troc_auc(valid)=%.4f\tbest_roc_auc(valid)=%.4f" % (
                 iteration,
                 loss(X_train[:5000], y_train[:5000], params),
