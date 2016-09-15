@@ -254,8 +254,7 @@ def grnn_transform_gated(params, jets, return_states=False):
             h_R = embeddings[-1][children[inner, 1]]
 
             hhu = np.hstack((h_L, h_R, u_k_inners))
-            r = sigmoid(np.dot(params["W_r"],
-                               hhu.T).T + params["b_r"])
+            r = sigmoid(np.dot(params["W_r"], hhu.T).T + params["b_r"])
             h_H = relu(np.dot(params["W_h"], np.multiply(r, hhu).T).T +
                        params["b_h"])
 
