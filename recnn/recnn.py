@@ -234,7 +234,8 @@ def grnn_transform_gated(params, jets, return_states=False):
     n_hidden = len(params["b_u"])
 
     if return_states:
-        states = {"embeddings": [], "z": [], "r": []}
+        states = {"embeddings": [], "z": [], "r": [], "levels": levels,
+                  "children": children, "n_inners": n_inners}
 
     embeddings = []
 
@@ -243,7 +244,6 @@ def grnn_transform_gated(params, jets, return_states=False):
         inner = nodes[:n_inners[j]]
         outer = nodes[n_inners[j]:]
 
-        # u_k = np.tanh(np.dot(params["W_u"], contents[j].T).T + params["b_u"])
         u_k = relu(np.dot(params["W_u"], contents[j].T).T + params["b_u"])
 
         if len(inner) > 0:
@@ -256,16 +256,15 @@ def grnn_transform_gated(params, jets, return_states=False):
             hhu = np.hstack((h_L, h_R, u_k_inners))
             r = sigmoid(np.dot(params["W_r"],
                                hhu.T).T + params["b_r"])
-            # h_H = np.tanh(np.dot(params["W_h"], np.multiply(r, hhu).T).T + params["b_h"])
             h_H = relu(np.dot(params["W_h"], np.multiply(r, hhu).T).T +
                        params["b_h"])
 
             z = np.dot(params["W_z"],
                        np.hstack((h_H, hhu)).T).T + params["b_z"]
-            z_H = z[:, :n_hidden]
-            z_L = z[:, n_hidden:2*n_hidden]
-            z_R = z[:, 2*n_hidden:3*n_hidden]
-            z_N = z[:, 3*n_hidden:]
+            z_H = z[:, :n_hidden]               # new activation
+            z_L = z[:, n_hidden:2*n_hidden]     # left activation
+            z_R = z[:, 2*n_hidden:3*n_hidden]   # right activation
+            z_N = z[:, 3*n_hidden:]             # local state
             z = np.concatenate([z_H[..., np.newaxis],
                                 z_L[..., np.newaxis],
                                 z_R[..., np.newaxis],
