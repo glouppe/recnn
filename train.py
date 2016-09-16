@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO,
 @click.command()
 @click.argument("filename_train")
 @click.argument("filename_model")
-@click.option("--gated", is_flag=True, default=True)
+@click.option("--simple", is_flag=True, default=False)
 @click.option("--n_features", default=7)
 @click.option("--n_hidden", default=30)
 @click.option("--n_epochs", default=5)
@@ -37,7 +37,7 @@ logging.basicConfig(level=logging.INFO,
 @click.option("--random_state", default=1)
 def train(filename_train,
           filename_model,
-          gated=True,
+          simple=False,
           n_features=7,
           n_hidden=30,
           n_epochs=5,
@@ -46,6 +46,7 @@ def train(filename_train,
           decay=0.7,
           random_state=1):
     # Initialization
+    gated = not simple
     logging.info("Calling with...")
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
