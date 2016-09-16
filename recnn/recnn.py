@@ -163,15 +163,18 @@ def orthogonal(shape, rng, scale=1.1):
 
 # Simple recursive activation
 
-def grnn_init_simple(n_features, n_hidden, scale=0.01, random_state=None):
+def grnn_init_simple(n_features, n_hidden, random_state=None):
     rng = check_random_state(random_state)
-
-    return {"W_u": scale * rng.randn(n_hidden, n_features),
+    return {"W_u": glorot_uniform(n_hidden, n_features, rng),
             "b_u": np.zeros(n_hidden),
-            "W_h": scale * rng.randn(n_hidden, 3 * n_hidden),
+            "W_h": orthogonal((n_hidden, 3 * n_hidden), rng),
             "b_h": np.zeros(n_hidden),
-            "W_clf": scale * rng.randn(n_hidden),
-            "b_clf": np.zeros(1)}
+            "W_clf": [glorot_uniform(n_hidden, n_hidden, rng),
+                      glorot_uniform(n_hidden, n_hidden, rng),
+                      glorot_uniform(n_hidden, 0, rng)],
+            "b_clf": [np.zeros(n_hidden),
+                      np.zeros(n_hidden),
+                      np.ones(1)]}
 
 
 def grnn_transform_simple(params, jets):
@@ -184,14 +187,14 @@ def grnn_transform_simple(params, jets):
         inner = nodes[:n_inners[j]]
         outer = nodes[n_inners[j]:]
 
-        u_k = np.dot(params["W_u"], contents[j].T).T + params["b_u"]
+        u_k = relu(np.dot(params["W_u"], contents[j].T).T + params["b_u"])
 
         if len(inner) > 0:
             h_L = embeddings[-1][children[inner, 0]]
             h_R = embeddings[-1][children[inner, 1]]
-            h = np.tanh(np.dot(params["W_h"],
-                               np.hstack((h_L, h_R, u_k[:n_inners[j]])).T).T +
-                        params["b_h"])
+            h = relu(np.dot(params["W_h"],
+                            np.hstack((h_L, h_R, u_k[:n_inners[j]])).T).T +
+                     params["b_h"])
 
             embeddings.append(np.concatenate((h, u_k[n_inners[j]:])))
 
@@ -202,20 +205,24 @@ def grnn_transform_simple(params, jets):
 
 
 def grnn_predict_simple(params, jets):
-    return sigmoid(np.dot(params["W_clf"],
-                          grnn_transform_simple(params, jets).T).T +
-                   params["b_clf"]).ravel()
+    h = grnn_transform_simple(params, jets)
+
+    h = relu(np.dot(params["W_clf"][0], h.T).T + params["b_clf"][0])
+    h = relu(np.dot(params["W_clf"][1], h.T).T + params["b_clf"][1])
+    h = sigmoid(np.dot(params["W_clf"][2], h.T).T + params["b_clf"][2])
+
+    return h.ravel()
 
 
 # Gated recursive activation
 
-def grnn_init_gated(n_features, n_hidden, scale=0.01, random_state=None):
+def grnn_init_gated(n_features, n_hidden, random_state=None):
     rng = check_random_state(random_state)
 
     return {"W_u": glorot_uniform(n_hidden, n_features, rng),
             "b_u": np.zeros(n_hidden),
             "W_h": orthogonal((n_hidden, 3 * n_hidden), rng),
-            "b_h": np.zeros(n_hidden) - scale,
+            "b_h": np.zeros(n_hidden),
             "W_z": glorot_uniform(4 * n_hidden, 4 * n_hidden, rng),
             "b_z": np.zeros(4 * n_hidden),
             "W_r": glorot_uniform(3 * n_hidden, 3 * n_hidden, rng),

@@ -14,6 +14,8 @@ from recnn.preprocessing import permute_by_pt
 from recnn.preprocessing import rotate
 from recnn.recnn import log_loss
 from recnn.recnn import adam
+from recnn.recnn import grnn_init_simple
+from recnn.recnn import grnn_predict_simple
 from recnn.recnn import grnn_init_gated
 from recnn.recnn import grnn_predict_gated
 
@@ -25,6 +27,7 @@ logging.basicConfig(level=logging.INFO,
 @click.command()
 @click.argument("filename_train")
 @click.argument("filename_model")
+@click.option("--gated", is_flag=True, default=True)
 @click.option("--n_features", default=7)
 @click.option("--n_hidden", default=30)
 @click.option("--n_epochs", default=5)
@@ -34,6 +37,7 @@ logging.basicConfig(level=logging.INFO,
 @click.option("--random_state", default=1)
 def train(filename_train,
           filename_model,
+          gated=True,
           n_features=7,
           n_hidden=30,
           n_epochs=5,
@@ -45,6 +49,7 @@ def train(filename_train,
     logging.info("Calling with...")
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
+    logging.info("\tgated = %s" % gated)
     logging.info("\tn_features = %d" % n_features)
     logging.info("\tn_hidden = %d" % n_hidden)
     logging.info("\tn_epochs = %d" % n_epochs)
@@ -84,8 +89,13 @@ def train(filename_train,
     # Training
     logging.info("Training...")
 
-    predict = grnn_predict_gated
-    init = grnn_init_gated
+    if gated:
+        predict = grnn_predict_gated
+        init = grnn_init_gated
+    else:
+        predict = grnn_predict_simple
+        init = grnn_init_simple
+
     trained_params = init(n_features, n_hidden, random_state=rng)
     n_batches = int(np.ceil(len(X_train) / batch_size))
     best_score = [-np.inf]  # yuck, but works
