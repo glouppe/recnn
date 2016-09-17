@@ -144,8 +144,8 @@ def softmax(X):
 
 # Initializations
 
-def glorot_uniform(fan_in, fan_out, rng):
-    s = np.sqrt(6. / (fan_in + fan_out))
+def glorot_uniform(fan_in, fan_out, rng, scale=0.1):
+    s = scale * np.sqrt(6. / (fan_in + fan_out))
     if fan_out > 0:
         return rng.rand(fan_in, fan_out) * 2 * s - s
     else:
