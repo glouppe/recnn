@@ -11,7 +11,7 @@ from sklearn.preprocessing import RobustScaler
 from sklearn.utils import check_random_state
 
 from recnn.preprocessing import permute_by_pt
-from recnn.preprocessing import rotate
+from recnn.preprocessing import extract
 from recnn.recnn import log_loss
 from recnn.recnn import adam
 from recnn.recnn import grnn_init_simple
@@ -74,7 +74,7 @@ def train(filename_train,
 
     # Preprocessing
     logging.info("Preprocessing...")
-    X = [rotate(permute_by_pt(jet)) for jet in X]
+    X = [extract(permute_by_pt(jet)) for jet in X]
     tf = RobustScaler().fit(np.vstack([jet["content"] for jet in X]))
 
     for jet in X:

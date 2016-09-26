@@ -49,7 +49,7 @@ def permute_by_pt(jet, root_id=None):
     return jet
 
 
-def rotate(jet):
+def extract(jet):
     jet = copy.deepcopy(jet)
 
     s = jet["content"].shape
@@ -66,9 +66,6 @@ def rotate(jet):
         pt = p / np.cosh(eta)
         phi = np.arctan2(py, px)
 
-        phi -= jet["phi"]
-        eta -= jet["eta"]
-
         content[i, 0] = p
         content[i, 1] = eta
         content[i, 2] = phi
@@ -79,10 +76,7 @@ def rotate(jet):
         content[i, 6] = theta
 
     jet["content"] = content
-
-    #  XXX rotate so that the lower-pt subjet is alway oriented in the same
-    #      direction
-
+    
     return jet
 
 
