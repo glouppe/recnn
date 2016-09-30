@@ -76,7 +76,7 @@ def extract(jet):
         content[i, 6] = theta
 
     jet["content"] = content
-    
+
     return jet
 
 
@@ -86,6 +86,7 @@ def randomize(jet):
     leaves = np.where(jet["tree"][:, 0] == -1)[0]
     nodes = [n for n in leaves]
     content = [jet["content"][n] for n in nodes]
+    nodes = [i for i in range(len(nodes))]
     tree = [[-1, -1] for n in nodes]
     pool = [n for n in nodes]
     next_id = len(nodes)
@@ -119,6 +120,7 @@ def sequentialize_by_pt(jet):
     leaves = np.where(jet["tree"][:, 0] == -1)[0]
     nodes = [n for n in leaves]
     content = [jet["content"][n] for n in nodes]
+    nodes = [i for i in range(len(nodes))]
     tree = [[-1, -1] for n in nodes]
     pool = sorted([n for n in nodes],
                   key=lambda n: _pt(content[n]))  # try reverse
