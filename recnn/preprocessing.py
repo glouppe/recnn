@@ -67,13 +67,13 @@ def extract(jet):
         phi = np.arctan2(py, px)
 
         content[i, 0] = p
-        content[i, 1] = eta
+        content[i, 1] = eta if np.isfinite(eta) else 0.0
         content[i, 2] = phi
         content[i, 3] = jet["content"][i, 3]
         content[i, 4] = (jet["content"][i, 3] /
                          jet["content"][jet["root_id"], 3])
-        content[i, 5] = pt
-        content[i, 6] = theta
+        content[i, 5] = pt if np.isfinite(pt) else 0.0
+        content[i, 6] = theta if np.isfinite(theta) else 0.0
 
     jet["content"] = content
 
