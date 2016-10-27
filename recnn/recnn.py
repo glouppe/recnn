@@ -214,6 +214,8 @@ def grnn_predict_simple(params, jets):
     return h.ravel()
 
 
+# Simple joined recursive activation
+
 def grnn_init_simple_join(n_features, n_hidden, random_state=None):
     rng = check_random_state(random_state)
 
