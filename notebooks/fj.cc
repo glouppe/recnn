@@ -52,7 +52,7 @@ static void fj(vector<double>& a,
     }
 
     // Cluster
-    JetDefinition def(algorithm == 0 ? kt_algorithm : antikt_algorithm, R);
+    JetDefinition def(algorithm == 0 ? kt_algorithm : (algorithm == 1 ? antikt_algorithm : cambridge_algorithm), R);
     ClusterSequence seq(particles, def);
     vector<PseudoJet> jets = sorted_by_pt(seq.inclusive_jets());
 

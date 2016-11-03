@@ -28,9 +28,9 @@ logging.basicConfig(level=logging.INFO,
 @click.argument("filename_model")
 @click.option("--n_features", default=7)
 @click.option("--n_hidden", default=40)
-@click.option("--n_epochs", default=5)
+@click.option("--n_epochs", default=20)
 @click.option("--batch_size", default=64)
-@click.option("--step_size", default=0.005)
+@click.option("--step_size", default=0.0005)
 @click.option("--decay", default=0.9)
 @click.option("--random_state", default=1)
 def train(filename_train1,
