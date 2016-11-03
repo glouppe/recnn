@@ -72,6 +72,7 @@ def train(filename_train,
     size = min(80000, len(X))
     X = [X[i] for i in indices[:size]]
     y = [y[i] for i in indices[:size]]
+    y = np.array(y)
 
     logging.info("\tfilename = %s" % filename_train)
     logging.info("\tX size = %d" % len(X))
