@@ -69,12 +69,12 @@ def train(filename_train1,
     X2, _ = pickle.load(fd)
     fd.close()
 
-    indices = rng.permutation(len(X1))
-    size = min(80000, len(X1))
-    X1 = [X1[i] for i in indices[:size]]
-    X2 = [X2[i] for i in indices[:size]]
-    y = [y[i] for i in indices[:size]]
-    y = np.array(y)
+    # indices = rng.permutation(len(X1))
+    # size = min(80000, len(X1))
+    # X1 = [X1[i] for i in indices[:size]]
+    # X2 = [X2[i] for i in indices[:size]]
+    # y = [y[i] for i in indices[:size]]
+    # y = np.array(y)
 
     logging.info("\tfilename = %s" % filename_train1)
     logging.info("\tfilename = %s" % filename_train2)
