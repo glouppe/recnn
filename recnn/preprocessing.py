@@ -114,7 +114,7 @@ def randomize(jet):
     return jet
 
 
-def sequentialize_by_pt(jet):
+def sequentialize_by_pt(jet, reverse=False):
     jet = copy.deepcopy(jet)
 
     leaves = np.where(jet["tree"][:, 0] == -1)[0]
@@ -123,7 +123,8 @@ def sequentialize_by_pt(jet):
     nodes = [i for i in range(len(nodes))]
     tree = [[-1, -1] for n in nodes]
     pool = sorted([n for n in nodes],
-                  key=lambda n: _pt(content[n]))  # try reverse
+                  key=lambda n: _pt(content[n]),
+                  reverse=reverse)
     next_id = len(pool)
 
     while len(pool) >= 2:
