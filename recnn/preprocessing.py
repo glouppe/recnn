@@ -50,6 +50,8 @@ def permute_by_pt(jet, root_id=None):
 
 
 def rewrite_content(jet):
+    jet = copy.deepcopy(jet)
+
     content = jet["content"]
     tree = jet["tree"]
 
@@ -64,10 +66,11 @@ def rewrite_content(jet):
 
     _rec(jet["root_id"])
 
+    return jet
+
 
 def extract(jet):
     jet = copy.deepcopy(jet)
-    rewrite_content(jet)
 
     s = jet["content"].shape
     content = np.zeros((s[0], s[1]+3))

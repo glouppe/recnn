@@ -10,6 +10,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import RobustScaler
 from sklearn.utils import check_random_state
 
+from recnn.preprocessing import rewrite_content
 from recnn.preprocessing import permute_by_pt
 from recnn.preprocessing import extract
 from recnn.recnn import log_loss
@@ -80,7 +81,7 @@ def train(filename_train,
 
     # Preprocessing
     logging.info("Preprocessing...")
-    X = [extract(permute_by_pt(jet)) for jet in X]
+    X = [extract(permute_by_pt(rewrite_content(jet))) for jet in X]
     tf = RobustScaler().fit(np.vstack([jet["content"] for jet in X]))
 
     for jet in X:
