@@ -49,8 +49,25 @@ def permute_by_pt(jet, root_id=None):
     return jet
 
 
+def rewrite_content(jet):
+    content = jet["content"]
+    tree = jet["tree"]
+
+    def _rec(i):
+        if tree[i, 0] == -1:
+            pass
+        else:
+            _rec(tree[i, 0])
+            _rec(tree[i, 1])
+            c = content[tree[i, 0]] + content[tree[i, 1]]
+            content[i] = c
+
+    _rec(jet["root_id"])
+
+
 def extract(jet):
     jet = copy.deepcopy(jet)
+    rewrite_content(jet)
 
     s = jet["content"].shape
     content = np.zeros((s[0], s[1]+3))
@@ -101,7 +118,6 @@ def randomize(jet):
 
         nodes.append(next_id)
         c = (content[left] + content[right])
-        c[0] = 0.
         content.append(c)
         tree.append([left, right])
         pool.append(next_id)
@@ -135,7 +151,6 @@ def sequentialize_by_pt(jet, reverse=False):
 
         nodes.append(next_id)
         c = (content[left] + content[right])
-        c[0] = 0.
         content.append(c)
         tree.append([left, right])
         pool.append(next_id)
