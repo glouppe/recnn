@@ -72,6 +72,9 @@ def train(filename_train,
 
     fd = open(filename_train, "rb")
 
+    # training file is assumed to be formatted a sequence of pickled pairs
+    # (e_i, y_i), where e_i is a list of (phi, eta, pt, mass, jet) tuples.
+
     X = []
     y = []
 
