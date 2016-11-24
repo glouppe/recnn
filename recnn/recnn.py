@@ -417,8 +417,8 @@ def event_transform(params, X, n_jets_per_event=10):
     return h
 
 
-def event_predict(params, X):
-    h = event_transform(params, X)
+def event_predict(params, X, n_jets_per_event=10):
+    h = event_transform(params, X, n_jets_per_event=n_jets_per_event)
 
     h = relu(np.dot(params["W_clf"][0], h.T).T + params["b_clf"][0])
     h = relu(np.dot(params["W_clf"][1], h.T).T + params["b_clf"][1])

@@ -133,7 +133,7 @@ def train(filename_train,
     best_params = [trained_params]
 
     def loss(X, y, params):
-        y_pred = predict(params, X)
+        y_pred = predict(params, X, n_jets_per_event=n_jets_per_event)
         l = log_loss(y, y_pred).mean()
         return l
 
@@ -145,7 +145,9 @@ def train(filename_train,
 
     def callback(params, iteration, gradient):
         if iteration % 25 == 0:
-            roc_auc = roc_auc_score(y_valid, predict(params, X_valid))
+            roc_auc = roc_auc_score(y_valid,
+                                    predict(params, X_valid,
+                                            n_jets_per_event=n_jets_per_event))
 
             if roc_auc > best_score[0]:
                 best_score[0] = roc_auc
