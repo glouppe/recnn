@@ -14,7 +14,7 @@ from recnn.preprocessing import rewrite_content
 from recnn.preprocessing import permute_by_pt
 from recnn.preprocessing import extract
 from recnn.recnn import log_loss
-from recnn.recnn import adam
+from recnn.recnn import adam, sgd
 from recnn.recnn import event_init
 from recnn.recnn import event_predict
 
@@ -51,6 +51,7 @@ def train(filename_train,
           n_jets_per_event=10,
           random_state=1):
     # Initialization
+    n_events = int(n_events)
     logging.info("Calling with...")
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
@@ -117,7 +118,7 @@ def train(filename_train,
     logging.info("Splitting into train and validation...")
 
     X_train, X_valid, y_train, y_valid = train_test_split(X, y,
-                                                          test_size=5000,
+                                                          test_size=1000,
                                                           random_state=rng)
 
     # Training
@@ -138,7 +139,7 @@ def train(filename_train,
         return l
 
     def objective(params, iteration):
-        rng = check_random_state(iteration % n_batches)
+        rng = check_random_state(iteration) # % n_batches)
         start = rng.randint(len(X_train) - batch_size)
         idx = slice(start, start+batch_size)
         return loss(X_train[idx], y_train[idx], params)
@@ -161,19 +162,19 @@ def train(filename_train,
                 "%5d\t~loss(train)=%.4f\tloss(valid)=%.4f"
                 "\troc_auc(valid)=%.4f\tbest_roc_auc(valid)=%.4f" % (
                     iteration,
-                    loss(X_train[:5000], y_train[:5000], params),
+                    loss(X_train, y_train, params),
                     loss(X_valid, y_valid, params),
                     roc_auc,
                     best_score[0]))
 
-    for i in range(n_epochs):
+    for i in range(1):
         logging.info("epoch = %d" % i)
         logging.info("step_size = %.4f" % step_size)
 
-        trained_params = adam(ag.grad(objective),
+        trained_params = sgd(ag.grad(objective),  # XXX or adam??
                               trained_params,
                               step_size=step_size,
-                              num_iters=1 * n_batches,
+                              num_iters=n_epochs * n_batches,
                               callback=callback)
         step_size = step_size * decay
 
