@@ -14,7 +14,7 @@ from recnn.preprocessing import rewrite_content
 from recnn.preprocessing import permute_by_pt
 from recnn.preprocessing import extract
 from recnn.recnn import log_loss
-from recnn.recnn import adam, sgd
+from recnn.recnn import adam, sgd, rmsprop
 from recnn.recnn import event_init
 from recnn.recnn import event_predict
 
@@ -119,6 +119,7 @@ def train(filename_train,
 
     X_train, X_valid, y_train, y_valid = train_test_split(X, y,
                                                           test_size=1000,
+                                                          stratify=y,
                                                           random_state=rng)
 
     # Training
@@ -128,7 +129,8 @@ def train(filename_train,
     init = event_init
 
     trained_params = init(n_features_embedding, n_hidden_embedding,
-                          n_features_rnn, n_hidden_rnn, random_state=rng)
+                          n_features_rnn, n_hidden_rnn, n_jets_per_event,
+                          random_state=rng)
     n_batches = int(np.ceil(len(X_train) / batch_size))
     best_score = [-np.inf]  # yuck, but works
     best_params = [trained_params]
@@ -162,7 +164,7 @@ def train(filename_train,
                 "%5d\t~loss(train)=%.4f\tloss(valid)=%.4f"
                 "\troc_auc(valid)=%.4f\tbest_roc_auc(valid)=%.4f" % (
                     iteration,
-                    loss(X_train, y_train, params),
+                    loss(X_train[:5000], y_train[:5000], params),
                     loss(X_valid, y_valid, params),
                     roc_auc,
                     best_score[0]))
@@ -171,7 +173,7 @@ def train(filename_train,
         logging.info("epoch = %d" % i)
         logging.info("step_size = %.4f" % step_size)
 
-        trained_params = sgd(ag.grad(objective),  # XXX or adam??
+        trained_params = adam(ag.grad(objective),
                               trained_params,
                               step_size=step_size,
                               num_iters=n_epochs * n_batches,

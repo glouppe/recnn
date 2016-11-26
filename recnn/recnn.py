@@ -356,14 +356,15 @@ def grnn_predict_gated(params, jets):
 def event_init(n_features_embedding,
                n_hidden_embedding,
                n_features_rnn,
-               n_hidden_rnn, random_state=None):
+               n_hidden_rnn,
+               n_jets_per_event,
+               random_state=None):
     rng = check_random_state(random_state)
     params = grnn_init_simple(n_features_embedding,
                               n_hidden_embedding,
                               random_state=rng)
 
     params.update({
-        "rnn_init_h": glorot_uniform(n_hidden_rnn, 0, rng),
         "rnn_W_hh": orthogonal((n_hidden_rnn, n_hidden_rnn), rng),
         "rnn_W_hx": glorot_uniform(n_hidden_rnn, n_features_rnn, rng),
         "rnn_b_h": np.zeros(n_hidden_rnn),
@@ -397,12 +398,13 @@ def event_transform(params, X, n_jets_per_event=10):
         features.append(e[0][:n_jets_per_event])
         jets.extend(e[1][:n_jets_per_event])
 
-    h_jets = np.hstack([np.vstack(features),
-                        grnn_transform_simple(params, jets)])
+    # h_jets = np.hstack([np.vstack(features),
+    #                     grnn_transform_simple(params, jets)])  # XXX: np.tanh or not???
+    h_jets = grnn_transform_simple(params, jets)
     h_jets = h_jets.reshape(len(X), n_jets_per_event, -1)
 
     # GRU layer
-    h = np.tile(params["rnn_init_h"], len(X)).reshape(len(X), -1)
+    h = np.zeros((len(X), params["rnn_b_h"].shape[0]))
 
     for t in range(n_jets_per_event):
         xt = h_jets[:, t, :]
@@ -410,7 +412,7 @@ def event_transform(params, X, n_jets_per_event=10):
                      np.dot(params["rnn_W_zx"], xt.T).T + params["rnn_b_z"])
         rt = sigmoid(np.dot(params["rnn_W_rh"], h.T).T +
                      np.dot(params["rnn_W_rx"], xt.T).T + params["rnn_b_r"])
-        ht = relu(np.dot(params["rnn_W_hh"], np.multiply(rt, h).T).T +
+        ht = relu(np.dot(params["rnn_W_hh"], np.multiply(rt, h).T).T +    # XXX should be tanh ==> hard to converge with tnah
                   np.dot(params["rnn_W_hx"], xt.T).T + params["rnn_b_h"])
         h = np.multiply(1. - zt, h) + np.multiply(zt, ht)
 
