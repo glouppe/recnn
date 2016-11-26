@@ -82,16 +82,21 @@ def train(filename_train,
     for i in range(n_events):
         e_i, y_i = pickle.load(fd)
 
+        keep = True
         original_features = []
         jets = []
 
         for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
+            if len(jet["tree"]) <= 1:
+                keep = False
+
             original_features.append((phi, eta, pt, mass))
             jet = extract(permute_by_pt(rewrite_content(jet)))
             jets.append(jet)
 
-        X.append([np.array(original_features), jets])
-        y.append(y_i)
+        if keep:
+            X.append([np.array(original_features), jets])
+            y.append(y_i)
 
     y = np.array(y)
 
@@ -108,7 +113,7 @@ def train(filename_train,
     tf_content = RobustScaler().fit(
         np.vstack([j["content"] for _, jets in X for j in jets]))
 
-    for i in range(n_events):
+    for i in range(len(X)):
         X[i][0] = tf_features.transform(X[i][0])
 
         for j in X[i][1]:

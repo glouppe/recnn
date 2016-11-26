@@ -7,6 +7,8 @@ from sklearn.utils import check_random_state
 
 def batch(jets):
     # Batch the recursive activations across all nodes of a same level
+    # !!! Assume that jets have at least one inner node.
+    #     Leads to off-by-one errors otherwise :(
 
     # Reindex node IDs over all jets
     #
