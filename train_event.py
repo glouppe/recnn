@@ -14,7 +14,7 @@ from recnn.preprocessing import rewrite_content
 from recnn.preprocessing import permute_by_pt
 from recnn.preprocessing import extract
 from recnn.recnn import log_loss
-from recnn.recnn import adam, sgd, rmsprop
+from recnn.recnn import adam
 from recnn.recnn import event_init
 from recnn.recnn import event_predict
 
@@ -27,6 +27,7 @@ logging.basicConfig(level=logging.INFO,
 @click.argument("filename_train")
 @click.argument("filename_model")
 @click.argument("n_events")
+@click.option("--embedding_model", default=None)
 @click.option("--n_features_embedding", default=7)
 @click.option("--n_hidden_embedding", default=40)
 @click.option("--n_features_rnn", default=40+4)
@@ -40,6 +41,7 @@ logging.basicConfig(level=logging.INFO,
 def train(filename_train,
           filename_model,
           n_events,
+          embedding_model=None,
           n_features_embedding=7,
           n_hidden_embedding=40,
           n_features_rnn=40+4,
@@ -56,6 +58,7 @@ def train(filename_train,
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
     logging.info("\tn_events = %d" % n_events)
+    logging.info("\tembedding_model = %s" % embedding_model)
     logging.info("\tn_features_embedding = %d" % n_features_embedding)
     logging.info("\tn_hidden_embedding = %d" % n_hidden_embedding)
     logging.info("\tn_features_rnn = %d" % n_features_rnn)
@@ -82,19 +85,16 @@ def train(filename_train,
     for i in range(n_events):
         e_i, y_i = pickle.load(fd)
 
-        keep = True
         original_features = []
         jets = []
 
         for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
-            if len(jet["tree"]) <= 1:
-                keep = False
+            if len(jet["tree"]) > 1:
+                original_features.append((phi, eta, pt, mass))
+                jet = extract(permute_by_pt(rewrite_content(jet)))
+                jets.append(jet)
 
-            original_features.append((phi, eta, pt, mass))
-            jet = extract(permute_by_pt(rewrite_content(jet)))
-            jets.append(jet)
-
-        if keep:
+        if len(jets) == n_jets_per_event:
             X.append([np.array(original_features), jets])
             y.append(y_i)
 
@@ -136,6 +136,7 @@ def train(filename_train,
     trained_params = init(n_features_embedding, n_hidden_embedding,
                           n_features_rnn, n_hidden_rnn, n_jets_per_event,
                           random_state=rng)
+
     n_batches = int(np.ceil(len(X_train) / batch_size))
     best_score = [-np.inf]  # yuck, but works
     best_params = [trained_params]
@@ -146,7 +147,7 @@ def train(filename_train,
         return l
 
     def objective(params, iteration):
-        rng = check_random_state(iteration) # % n_batches)
+        rng = check_random_state(iteration)
         start = rng.randint(len(X_train) - batch_size)
         idx = slice(start, start+batch_size)
         return loss(X_train[idx], y_train[idx], params)
