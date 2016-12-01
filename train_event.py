@@ -175,14 +175,14 @@ def train(filename_train,
                     roc_auc,
                     best_score[0]))
 
-    for i in range(1):
+    for i in range(n_epochs):
         logging.info("epoch = %d" % i)
         logging.info("step_size = %.4f" % step_size)
 
         trained_params = adam(ag.grad(objective),
                               trained_params,
                               step_size=step_size,
-                              num_iters=n_epochs * n_batches,
+                              num_iters=1 * n_batches,
                               callback=callback)
         step_size = step_size * decay
 
