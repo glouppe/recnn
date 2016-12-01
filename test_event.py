@@ -149,7 +149,8 @@ def test(filename_train,
     all_y_pred = []
 
     for start in range(0, len(y), 1000):
-        y_pred = predict(params, X[start:start+1000])
+        y_pred = predict(params, X[start:start+1000],
+                         n_jets_per_event=n_jets_per_event)
         all_y_pred.append(y_pred)
 
     y_pred = np.concatenate(all_y_pred)
