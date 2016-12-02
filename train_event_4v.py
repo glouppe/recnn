@@ -74,9 +74,8 @@ def train(filename_train,
         v_i, y_i = pickle.load(fd)
         v_i = v_i[:n_particles_per_event]
 
-        if len(v_i) == n_particles_per_event:
-            X.append(v_i)
-            y.append(y_i)
+        X.append(v_i)
+        y.append(y_i)
 
     y = np.array(y)
 
@@ -93,6 +92,10 @@ def train(filename_train,
 
     for i in range(len(X)):
         X[i] = tf_features.transform(X[i])
+
+        if len(X[i]) < n_particles_per_event:
+            X[i] = np.vstack([X[i],
+                              np.zeros((n_particles_per_event - len(X[i]), 4))])
 
     # Split into train+test
     logging.info("Splitting into train and validation...")
