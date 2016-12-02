@@ -15,8 +15,8 @@ from recnn.preprocessing import permute_by_pt
 from recnn.preprocessing import extract
 from recnn.recnn import log_loss
 from recnn.recnn import adam
-from recnn.recnn import event_init
-from recnn.recnn import event_predict
+from recnn.recnn import event_baseline_init
+from recnn.recnn import event_baseline_predict
 
 
 logging.basicConfig(level=logging.INFO,
@@ -27,28 +27,24 @@ logging.basicConfig(level=logging.INFO,
 @click.argument("filename_train")
 @click.argument("filename_model")
 @click.argument("n_events")
-@click.option("--n_features_embedding", default=7)
-@click.option("--n_hidden_embedding", default=40)
-@click.option("--n_features_rnn", default=40+4)
-@click.option("--n_hidden_rnn", default=10)
+@click.option("--n_features_rnn", default=4)
+@click.option("--n_hidden_rnn", default=40)
 @click.option("--n_epochs", default=20)
 @click.option("--batch_size", default=64)
 @click.option("--step_size", default=0.0005)
 @click.option("--decay", default=0.9)
-@click.option("--n_jets_per_event", default=10)
+@click.option("--n_particles_per_event", default=10)
 @click.option("--random_state", default=1)
 def train(filename_train,
           filename_model,
           n_events,
-          n_features_embedding=7,
-          n_hidden_embedding=40,
-          n_features_rnn=40+4,
-          n_hidden_rnn=10,
+          n_features_rnn=4,
+          n_hidden_rnn=40,
           n_epochs=5,
           batch_size=64,
           step_size=0.01,
           decay=0.7,
-          n_jets_per_event=10,
+          n_particles_per_event=10,
           random_state=1):
     # Initialization
     n_events = int(n_events)
@@ -56,15 +52,13 @@ def train(filename_train,
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
     logging.info("\tn_events = %d" % n_events)
-    logging.info("\tn_features_embedding = %d" % n_features_embedding)
-    logging.info("\tn_hidden_embedding = %d" % n_hidden_embedding)
     logging.info("\tn_features_rnn = %d" % n_features_rnn)
     logging.info("\tn_hidden_rnn = %d" % n_hidden_rnn)
     logging.info("\tn_epochs = %d" % n_epochs)
     logging.info("\tbatch_size = %d" % batch_size)
     logging.info("\tstep_size = %f" % step_size)
     logging.info("\tdecay = %f" % decay)
-    logging.info("\tn_jets_per_event = %d" % n_jets_per_event)
+    logging.info("\n_particles_per_event = %d" % n_particles_per_event)
     logging.info("\trandom_state = %d" % random_state)
     rng = check_random_state(random_state)
 
@@ -73,27 +67,15 @@ def train(filename_train,
 
     fd = open(filename_train, "rb")
 
-    # training file is assumed to be formatted a sequence of pickled pairs
-    # (e_i, y_i), where e_i is a list of (phi, eta, pt, mass, jet) tuples.
-
     X = []
     y = []
 
     for i in range(n_events):
-        e_i, y_i = pickle.load(fd)
+        v_i, y_i = pickle.load(fd)
+        v_i = v_i[:n_particles_per_event]
 
-        original_features = []
-        jets = []
-
-        for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
-            if len(jet["tree"]) > 1:
-                original_features.append((phi, eta, pt, mass))
-
-                jet = extract(permute_by_pt(rewrite_content(jet)))
-                jets.append(jet)
-
-        if len(jets) == n_jets_per_event:
-            X.append([np.array(original_features), jets])
+        if len(v_i) == n_particles_per_event:
+            X.append(v_i)
             y.append(y_i)
 
     y = np.array(y)
@@ -107,16 +89,10 @@ def train(filename_train,
     # Preprocessing
     logging.info("Preprocessing...")
     tf_features = RobustScaler().fit(
-        np.vstack([features for features, _ in X]))
-
-    tf_content = RobustScaler().fit(
-        np.vstack([j["content"] for _, jets in X for j in jets]))
+        np.vstack([features for features in X]))
 
     for i in range(len(X)):
-        X[i][0] = tf_features.transform(X[i][0])
-
-        for j in X[i][1]:
-            j["content"] = tf_content.transform(j["content"])
+        X[i] = tf_features.transform(X[i])
 
     # Split into train+test
     logging.info("Splitting into train and validation...")
@@ -129,11 +105,10 @@ def train(filename_train,
     # Training
     logging.info("Training...")
 
-    predict = event_predict
-    init = event_init
+    predict = event_baseline_predict
+    init = event_baseline_init
 
-    trained_params = init(n_features_embedding, n_hidden_embedding,
-                          n_features_rnn, n_hidden_rnn, n_jets_per_event,
+    trained_params = init(n_features_rnn, n_hidden_rnn,
                           random_state=rng)
 
     n_batches = int(np.ceil(len(X_train) / batch_size))
@@ -142,7 +117,7 @@ def train(filename_train,
 
     def loss(X, y, params):
         y_pred = predict(params, X,
-                         n_jets_per_event=n_jets_per_event)
+                         n_particles_per_event=n_particles_per_event)
         l = log_loss(y, y_pred).mean()
         return l
 
@@ -156,7 +131,7 @@ def train(filename_train,
         if iteration % 25 == 0:
             roc_auc = roc_auc_score(y_valid,
                                     predict(params, X_valid,
-                                            n_jets_per_event=n_jets_per_event))
+                                            n_particles_per_event=n_particles_per_event))
 
             if roc_auc > best_score[0]:
                 best_score[0] = roc_auc

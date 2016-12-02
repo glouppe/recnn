@@ -360,16 +360,11 @@ def event_init(n_features_embedding,
                n_features_rnn,
                n_hidden_rnn,
                n_jets_per_event,
-               embedding_model=None,
                random_state=None):
     rng = check_random_state(random_state)
-
-    if not embedding_model:
-        params = grnn_init_simple(n_features_embedding,
-                                  n_hidden_embedding,
-                                  random_state=rng)
-    else:
-        params = {}
+    params = grnn_init_simple(n_features_embedding,
+                              n_hidden_embedding,
+                              random_state=rng)
 
     params.update({
         "rnn_W_hh": orthogonal((n_hidden_rnn, n_hidden_rnn), rng),
@@ -392,7 +387,7 @@ def event_init(n_features_embedding,
     return params
 
 
-def event_transform(params, X, n_jets_per_event=10, embedding_model=None):
+def event_transform(params, X, n_jets_per_event=10):
     # Assume events e_j are structured as pairs (features, jets)
     # where features is a N_j x n_features array
     #       jets is a list of N_j jets
@@ -407,8 +402,7 @@ def event_transform(params, X, n_jets_per_event=10, embedding_model=None):
 
     h_jets = np.hstack([
         np.vstack(features),
-        grnn_transform_simple(params, jets) if not embedding_model else
-        grnn_transform_simple(embedding_model, jets)])
+        grnn_transform_simple(params, jets)])
     h_jets = h_jets.reshape(len(X), n_jets_per_event, -1)
 
     # GRU layer
@@ -420,17 +414,80 @@ def event_transform(params, X, n_jets_per_event=10, embedding_model=None):
                      np.dot(params["rnn_W_zx"], xt.T).T + params["rnn_b_z"])
         rt = sigmoid(np.dot(params["rnn_W_rh"], h.T).T +
                      np.dot(params["rnn_W_rx"], xt.T).T + params["rnn_b_r"])
-        ht = relu(np.dot(params["rnn_W_hh"], np.multiply(rt, h).T).T +    # XXX should be tanh ==> hard to converge with tnah ==> retry now that the bug is fixed
+        ht = relu(np.dot(params["rnn_W_hh"], np.multiply(rt, h).T).T +
                   np.dot(params["rnn_W_hx"], xt.T).T + params["rnn_b_h"])
         h = np.multiply(1. - zt, h) + np.multiply(zt, ht)
 
     return h
 
 
-def event_predict(params, X, n_jets_per_event=10, embedding_model=None):
+def event_predict(params, X, n_jets_per_event=10):
     h = event_transform(params, X,
-                        n_jets_per_event=n_jets_per_event,
-                        embedding_model=embedding_model)
+                        n_jets_per_event=n_jets_per_event)
+
+    h = relu(np.dot(params["W_clf"][0], h.T).T + params["b_clf"][0])
+    h = relu(np.dot(params["W_clf"][1], h.T).T + params["b_clf"][1])
+    h = sigmoid(np.dot(params["W_clf"][2], h.T).T + params["b_clf"][2])
+
+    return h.ravel()
+
+
+# Event baseline (direct gru)
+def event_baseline_init(n_features_rnn,
+                        n_hidden_rnn,
+                        random_state=None):
+    rng = check_random_state(random_state)
+    params = {}
+
+    params.update({
+        "rnn_W_hh": orthogonal((n_hidden_rnn, n_hidden_rnn), rng),
+        "rnn_W_hx": glorot_uniform(n_hidden_rnn, n_features_rnn, rng),
+        "rnn_b_h": np.zeros(n_hidden_rnn),
+        "rnn_W_zh": orthogonal((n_hidden_rnn, n_hidden_rnn,), rng),
+        "rnn_W_zx": glorot_uniform(n_hidden_rnn, n_features_rnn, rng),
+        "rnn_b_z": np.zeros(n_hidden_rnn),
+        "rnn_W_rh": orthogonal((n_hidden_rnn, n_hidden_rnn,), rng),
+        "rnn_W_rx": glorot_uniform(n_hidden_rnn, n_features_rnn, rng),
+        "rnn_b_r": np.zeros(n_hidden_rnn),
+        "W_clf": [glorot_uniform(n_hidden_rnn, n_hidden_rnn, rng),
+                  glorot_uniform(n_hidden_rnn, n_hidden_rnn, rng),
+                  glorot_uniform(n_hidden_rnn, 0, rng)],
+        "b_clf": [np.zeros(n_hidden_rnn),
+                  np.zeros(n_hidden_rnn),
+                  np.ones(1)]
+        })
+
+    return params
+
+
+def event_baseline_transform(params, X, n_particles_per_event=10):
+    features = []
+
+    for e in X:
+        features.append(e[:n_particles_per_event])
+
+    h_jets = np.vstack(features)
+    h_jets = h_jets.reshape(len(X), n_particles_per_event, -1)
+
+    # GRU layer
+    h = np.zeros((len(X), params["rnn_b_h"].shape[0]))
+
+    for t in range(n_particles_per_event):
+        xt = h_jets[:, t, :]
+        zt = sigmoid(np.dot(params["rnn_W_zh"], h.T).T +
+                     np.dot(params["rnn_W_zx"], xt.T).T + params["rnn_b_z"])
+        rt = sigmoid(np.dot(params["rnn_W_rh"], h.T).T +
+                     np.dot(params["rnn_W_rx"], xt.T).T + params["rnn_b_r"])
+        ht = relu(np.dot(params["rnn_W_hh"], np.multiply(rt, h).T).T +
+                  np.dot(params["rnn_W_hx"], xt.T).T + params["rnn_b_h"])
+        h = np.multiply(1. - zt, h) + np.multiply(zt, ht)
+
+    return h
+
+
+def event_baseline_predict(params, X, n_particles_per_event=10):
+    h = event_baseline_transform(params, X,
+                                 n_particles_per_event=n_particles_per_event)
 
     h = relu(np.dot(params["W_clf"][0], h.T).T + params["b_clf"][0])
     h = relu(np.dot(params["W_clf"][1], h.T).T + params["b_clf"][1])
