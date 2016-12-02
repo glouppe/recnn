@@ -6,10 +6,7 @@ import pickle
 from sklearn.preprocessing import RobustScaler
 from sklearn.utils import check_random_state
 
-from recnn.preprocessing import rewrite_content
-from recnn.preprocessing import permute_by_pt
-from recnn.preprocessing import extract
-from recnn.recnn import event_predict
+from recnn.recnn import event_baseline_predict
 
 
 logging.basicConfig(level=logging.INFO,
@@ -23,7 +20,7 @@ logging.basicConfig(level=logging.INFO,
 @click.argument("n_events_train")
 @click.argument("n_events_test")
 @click.argument("filename_output")
-@click.option("--n_jets_per_event", default=10)
+@click.option("--n_particles_per_event", default=10)
 @click.option("--random_state", default=1)
 def test(filename_train,
          filename_test,
@@ -31,7 +28,7 @@ def test(filename_train,
          n_events_train,
          n_events_test,
          filename_output,
-         n_jets_per_event=10,
+         n_particles_per_event=10,
          random_state=1):
     # Initialization
     n_events_train = int(n_events_train)
@@ -43,7 +40,7 @@ def test(filename_train,
     logging.info("\tn_events_train = %d" % n_events_train)
     logging.info("\tn_events_test = %d" % n_events_test)
     logging.info("\tfilename_output = %s" % filename_output)
-    logging.info("\tn_jets_per_event = %d" % n_jets_per_event)
+    logging.info("\tn_particles_per_event = %d" % n_particles_per_event)
     logging.info("\trandom_state = %d" % random_state)
     rng = check_random_state(random_state)
 
@@ -52,27 +49,15 @@ def test(filename_train,
 
     fd = open(filename_train, "rb")
 
-    # training file is assumed to be formatted a sequence of pickled pairs
-    # (e_i, y_i), where e_i is a list of (phi, eta, pt, mass, jet) tuples.
-
     X = []
     y = []
 
     for i in range(n_events_train):
-        e_i, y_i = pickle.load(fd)
+        v_i, y_i = pickle.load(fd)
+        v_i = v_i[:n_particles_per_event]
 
-        original_features = []
-        jets = []
-
-        for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
-            if len(jet["tree"]) > 1:
-                original_features.append((phi, eta, pt, mass))
-                jet = extract(permute_by_pt(rewrite_content(jet)))
-                jets.append(jet)
-
-        if len(jets) == n_jets_per_event:
-            X.append([np.array(original_features), jets])
-            y.append(y_i)
+        X.append(v_i)
+        y.append(y_i)
 
     y = np.array(y)
 
@@ -85,9 +70,7 @@ def test(filename_train,
     # Building scalers
     logging.info("Building scalers...")
     tf_features = RobustScaler().fit(
-        np.vstack([features for features, _ in X]))
-    tf_content = RobustScaler().fit(
-        np.vstack([j["content"] for _, jets in X for j in jets]))
+        np.vstack([features for features in X]))
 
     X = None
     y = None
@@ -97,27 +80,15 @@ def test(filename_train,
 
     fd = open(filename_test, "rb")
 
-    # training file is assumed to be formatted a sequence of pickled pairs
-    # (e_i, y_i), where e_i is a list of (phi, eta, pt, mass, jet) tuples.
-
     X = []
     y = []
 
     for i in range(n_events_test):
-        e_i, y_i = pickle.load(fd)
+        v_i, y_i = pickle.load(fd)
+        v_i = v_i[:n_particles_per_event]
 
-        original_features = []
-        jets = []
-
-        for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
-            if len(jet["tree"]) > 1:
-                original_features.append((phi, eta, pt, mass))
-                jet = extract(permute_by_pt(rewrite_content(jet)))
-                jets.append(jet)
-
-        if len(jets) == n_jets_per_event:
-            X.append([np.array(original_features), jets])
-            y.append(y_i)
+        X.append(v_i)
+        y.append(y_i)
 
     y = np.array(y)
 
@@ -131,15 +102,16 @@ def test(filename_train,
     logging.info("Scaling...")
 
     for i in range(len(X)):
-        X[i][0] = tf_features.transform(X[i][0])
+        X[i] = tf_features.transform(X[i])
 
-        for j in X[i][1]:
-            j["content"] = tf_content.transform(j["content"])
+        if len(X[i]) < n_particles_per_event:
+            X[i] = np.vstack([X[i],
+                              np.zeros((n_particles_per_event - len(X[i]), 4))])
 
     # Testing
     logging.info("Testing...")
 
-    predict = event_predict
+    predict = event_baseline_predict
 
     fd = open(filename_model, "rb")
     params = pickle.load(fd)
@@ -149,7 +121,7 @@ def test(filename_train,
 
     for start in range(0, len(y), 1000):
         y_pred = predict(params, X[start:start+1000],
-                         n_jets_per_event=n_jets_per_event)
+                         n_particles_per_event=n_particles_per_event)
         all_y_pred.append(y_pred)
 
     y_pred = np.concatenate(all_y_pred)

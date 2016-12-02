@@ -10,9 +10,6 @@ from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import RobustScaler
 from sklearn.utils import check_random_state
 
-from recnn.preprocessing import rewrite_content
-from recnn.preprocessing import permute_by_pt
-from recnn.preprocessing import extract
 from recnn.recnn import log_loss
 from recnn.recnn import adam
 from recnn.recnn import event_baseline_init
@@ -58,7 +55,7 @@ def train(filename_train,
     logging.info("\tbatch_size = %d" % batch_size)
     logging.info("\tstep_size = %f" % step_size)
     logging.info("\tdecay = %f" % decay)
-    logging.info("\n_particles_per_event = %d" % n_particles_per_event)
+    logging.info("\tn_particles_per_event = %d" % n_particles_per_event)
     logging.info("\trandom_state = %d" % random_state)
     rng = check_random_state(random_state)
 
