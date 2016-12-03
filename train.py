@@ -73,7 +73,7 @@ def train(filename_train,
     y = np.array(y)
 
     if n_events_train > 0:
-        indices = rng.permutation(len(X))[:n_events_train]
+        indices = check_random_state(123).permutation(len(X))[:n_events_train]
         X = [X[i] for i in indices]
         y = y[indices]
 
