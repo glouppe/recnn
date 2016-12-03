@@ -28,6 +28,7 @@ logging.basicConfig(level=logging.INFO,
 @click.command()
 @click.argument("filename_train")
 @click.argument("filename_model")
+@click.option("--n_events_train", default=-1)
 @click.option("--simple", is_flag=True, default=False)
 @click.option("--n_features", default=7)
 @click.option("--n_hidden", default=40)
@@ -38,6 +39,7 @@ logging.basicConfig(level=logging.INFO,
 @click.option("--random_state", default=1)
 def train(filename_train,
           filename_model,
+          n_events_train=-1,
           simple=False,
           n_features=7,
           n_hidden=30,
@@ -51,6 +53,7 @@ def train(filename_train,
     logging.info("Calling with...")
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
+    logging.info("\tn_events_train = %d" % n_events_train)
     logging.info("\tgated = %s" % gated)
     logging.info("\tn_features = %d" % n_features)
     logging.info("\tn_hidden = %d" % n_hidden)
@@ -68,6 +71,11 @@ def train(filename_train,
     X, y = pickle.load(fd)
     fd.close()
     y = np.array(y)
+
+    if n_events_train > 0:
+        indices = rng.permutation(len(X))[:n_events_train]
+        X = [X[i] for i in indices]
+        y = y[indices]
 
     logging.info("\tfilename = %s" % filename_train)
     logging.info("\tX size = %d" % len(X))
