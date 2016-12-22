@@ -409,7 +409,7 @@ def event_transform(params, X, n_jets_per_event=10):
     h = np.zeros((len(X), params["rnn_b_h"].shape[0]))
 
     for t in range(n_jets_per_event):
-        xt = h_jets[:, t, :]
+        xt = h_jets[:, n_jets_per_event - 1 - t, :]
         zt = sigmoid(np.dot(params["rnn_W_zh"], h.T).T +
                      np.dot(params["rnn_W_zx"], xt.T).T + params["rnn_b_z"])
         rt = sigmoid(np.dot(params["rnn_W_rh"], h.T).T +
@@ -473,7 +473,7 @@ def event_baseline_transform(params, X, n_particles_per_event=10):
     h = np.zeros((len(X), params["rnn_b_h"].shape[0]))
 
     for t in range(n_particles_per_event):
-        xt = h_jets[:, t, :]
+        xt = h_jets[:, n_particles_per_event - 1 - t, :]
         zt = sigmoid(np.dot(params["rnn_W_zh"], h.T).T +
                      np.dot(params["rnn_W_zx"], xt.T).T + params["rnn_b_z"])
         rt = sigmoid(np.dot(params["rnn_W_rh"], h.T).T +
