@@ -94,6 +94,7 @@ def extract(jet):
                          jet["content"][jet["root_id"], 3])
         content[i, 5] = pt if np.isfinite(pt) else 0.0
         content[i, 6] = theta if np.isfinite(theta) else 0.0
+        # add pflow from jet["content"][i, 4]
 
     jet["content"] = content
 

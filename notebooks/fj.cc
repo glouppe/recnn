@@ -23,6 +23,7 @@ void _traverse_rec(PseudoJet root, int parent_id, bool is_left,
     content.push_back(root.py());
     content.push_back(root.pz());
     content.push_back(root.e());
+    content.push_back(root.user_index());  // remove this for jet studies
 
     if (root.has_pieces()) {
         vector<PseudoJet> pieces = root.pieces();
@@ -48,7 +49,9 @@ static void fj(vector<double>& a,
     vector<fastjet::PseudoJet> particles;
 
     for (unsigned int i = 0; i < a.size(); i += 4) {
-        particles.push_back(PseudoJet(a[i], a[i+1], a[i+2], a[i+3]));
+        fastjet::PseudoJet p = PseudoJet(a[i], a[i+1], a[i+2], a[i+3]);
+        p.set_user_index((int) i / 4);
+        particles.push_back(p);
     }
 
     // Cluster
