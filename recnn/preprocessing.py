@@ -69,11 +69,15 @@ def rewrite_content(jet):
     return jet
 
 
-def extract(jet):
+def extract(jet, pflow=False):
     jet = copy.deepcopy(jet)
 
     s = jet["content"].shape
-    content = np.zeros((s[0], 7))
+
+    if not pflow:
+        content = np.zeros((s[0], 7))
+    else:
+        content = np.zeros((s[0], 7+4))
 
     for i in range(len(jet["content"])):
         px = jet["content"][i, 0]
@@ -94,7 +98,9 @@ def extract(jet):
                          jet["content"][jet["root_id"], 3])
         content[i, 5] = pt if np.isfinite(pt) else 0.0
         content[i, 6] = theta if np.isfinite(theta) else 0.0
-        # add pflow from jet["content"][i, 4]
+
+        if pflow:
+            content[i, 7+jet["content"][i, 4]] = 1.0
 
     jet["content"] = content
 

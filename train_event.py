@@ -27,6 +27,7 @@ logging.basicConfig(level=logging.INFO,
 @click.argument("filename_train")
 @click.argument("filename_model")
 @click.argument("n_events")
+@click.option("--pflow", is_flag=True, default=False)
 @click.option("--n_features_embedding", default=7)
 @click.option("--n_hidden_embedding", default=40)
 @click.option("--n_features_rnn", default=40+4)
@@ -40,6 +41,7 @@ logging.basicConfig(level=logging.INFO,
 def train(filename_train,
           filename_model,
           n_events,
+          pflow=False,
           n_features_embedding=7,
           n_hidden_embedding=40,
           n_features_rnn=40+4,
@@ -56,6 +58,7 @@ def train(filename_train,
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
     logging.info("\tn_events = %d" % n_events)
+    logging.info("\tpflow = %s" % pflow)
     logging.info("\tn_features_embedding = %d" % n_features_embedding)
     logging.info("\tn_hidden_embedding = %d" % n_hidden_embedding)
     logging.info("\tn_features_rnn = %d" % n_features_rnn)
@@ -89,7 +92,7 @@ def train(filename_train,
             if len(jet["tree"]) > 1:
                 original_features.append((phi, eta, pt, mass))
 
-                jet = extract(permute_by_pt(rewrite_content(jet)))
+                jet = extract(permute_by_pt(rewrite_content(jet)), pflow=pflow)
                 jets.append(jet)
 
         if len(jets) == n_jets_per_event:
