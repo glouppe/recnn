@@ -73,7 +73,7 @@ def extract(jet):
     jet = copy.deepcopy(jet)
 
     s = jet["content"].shape
-    content = np.zeros((s[0], s[1]+3))
+    content = np.zeros((s[0], 7))
 
     for i in range(len(jet["content"])):
         px = jet["content"][i, 0]
