@@ -52,6 +52,9 @@ def permute_by_pt(jet, root_id=None):
 def rewrite_content(jet):
     jet = copy.deepcopy(jet)
 
+    if jet["content"].shape[1] == 5:
+        pflow = jet["content"][:, 4].copy()
+
     content = jet["content"]
     tree = jet["tree"]
 
@@ -65,6 +68,9 @@ def rewrite_content(jet):
             content[i] = c
 
     _rec(jet["root_id"])
+
+    if jet["content"].shape[1] == 5:
+        jet["content"][:, 4] = pflow
 
     return jet
 
@@ -100,7 +106,8 @@ def extract(jet, pflow=False):
         content[i, 6] = theta if np.isfinite(theta) else 0.0
 
         if pflow:
-            content[i, 7+jet["content"][i, 4]] = 1.0
+            if jet["content"][i, 4] >= 0:
+                content[i, 7+int(jet["content"][i, 4])] = 1.0
 
     jet["content"] = content
 

@@ -54,6 +54,8 @@ def train(filename_train,
           random_state=1):
     # Initialization
     n_events = int(n_events)
+    if pflow:
+        n_features_embedding += 4
     logging.info("Calling with...")
     logging.info("\tfilename_train = %s" % filename_train)
     logging.info("\tfilename_model = %s" % filename_model)
@@ -92,6 +94,7 @@ def train(filename_train,
             if len(jet["tree"]) > 1:
                 original_features.append((phi, eta, pt, mass))
 
+                #import IPython; IPython.embed()
                 jet = extract(permute_by_pt(rewrite_content(jet)), pflow=pflow)
                 jets.append(jet)
 
