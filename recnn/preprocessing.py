@@ -135,6 +135,10 @@ def randomize(jet):
 
         nodes.append(next_id)
         c = (content[left] + content[right])
+
+        if len(c) == 5:
+            c[-1] = -1
+
         content.append(c)
         tree.append([left, right])
         pool.append(next_id)
@@ -168,6 +172,10 @@ def sequentialize_by_pt(jet, reverse=False):
 
         nodes.append(next_id)
         c = (content[left] + content[right])
+
+        if len(c) == 5:
+            c[-1] = -1
+
         content.append(c)
         tree.append([left, right])
         pool.append(next_id)
