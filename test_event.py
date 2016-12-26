@@ -23,6 +23,7 @@ logging.basicConfig(level=logging.INFO,
 @click.argument("n_events_train")
 @click.argument("n_events_test")
 @click.argument("filename_output")
+@click.option("--pflow", is_flag=True, default=False)
 @click.option("--n_jets_per_event", default=10)
 @click.option("--random_state", default=1)
 def test(filename_train,
@@ -31,6 +32,7 @@ def test(filename_train,
          n_events_train,
          n_events_test,
          filename_output,
+         pflow=False,
          n_jets_per_event=10,
          random_state=1):
     # Initialization
@@ -43,6 +45,7 @@ def test(filename_train,
     logging.info("\tn_events_train = %d" % n_events_train)
     logging.info("\tn_events_test = %d" % n_events_test)
     logging.info("\tfilename_output = %s" % filename_output)
+    logging.info("\tpflow = %s" % pflow)
     logging.info("\tn_jets_per_event = %d" % n_jets_per_event)
     logging.info("\trandom_state = %d" % random_state)
     rng = check_random_state(random_state)
@@ -67,7 +70,7 @@ def test(filename_train,
         for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
             if len(jet["tree"]) > 1:
                 original_features.append((phi, eta, pt, mass))
-                jet = extract(permute_by_pt(rewrite_content(jet)))
+                jet = extract(permute_by_pt(rewrite_content(jet)), pflow=pflow)
                 jets.append(jet)
 
         if len(jets) == n_jets_per_event:
@@ -112,7 +115,7 @@ def test(filename_train,
         for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
             if len(jet["tree"]) > 1:
                 original_features.append((phi, eta, pt, mass))
-                jet = extract(permute_by_pt(rewrite_content(jet)))
+                jet = extract(permute_by_pt(rewrite_content(jet)), pflow=pflow)
                 jets.append(jet)
 
         if len(jets) == n_jets_per_event:

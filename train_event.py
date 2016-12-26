@@ -93,8 +93,6 @@ def train(filename_train,
         for j, (phi, eta, pt, mass, jet) in enumerate(e_i[:n_jets_per_event]):
             if len(jet["tree"]) > 1:
                 original_features.append((phi, eta, pt, mass))
-
-                #import IPython; IPython.embed()
                 jet = extract(permute_by_pt(rewrite_content(jet)), pflow=pflow)
                 jets.append(jet)
 
