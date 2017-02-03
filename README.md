@@ -13,7 +13,7 @@ Recent progress in applying machine learning for jet physics has been built upon
 Please cite using the following BibTex entry:
 
 ```
-@article{louppe2016pivot,
+@article{louppe2017qcdrecnn,
            author = {{Louppe}, G. and {Cho}, K. and {Becot}, C and {Cranmer}, K.},
             title = "{QCD-Aware Recursive Neural Networks for Jet Physics}",
           journal = {ArXiv e-prints},
