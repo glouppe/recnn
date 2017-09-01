@@ -89,7 +89,7 @@ def train(filename_train,
     for jet in X:
         jet["content"] = tf.transform(jet["content"])
 
-    # Split into train+test
+    # Split into train+validation
     logging.info("Splitting into train and validation...")
 
     X_train, X_valid, y_train, y_valid = train_test_split(X, y,

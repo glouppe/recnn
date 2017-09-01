@@ -216,47 +216,6 @@ def grnn_predict_simple(params, jets):
     return h.ravel()
 
 
-# Simple joined recursive activation
-
-def grnn_init_simple_join(n_features, n_hidden, random_state=None):
-    rng = check_random_state(random_state)
-
-    p1 = grnn_init_simple(n_features, n_hidden, random_state=rng)
-    del p1["W_clf"]
-    del p1["b_clf"]
-    p2 = grnn_init_simple(n_features, n_hidden, random_state=rng)
-    del p2["W_clf"]
-    del p2["b_clf"]
-
-    params = {"W_clf": [glorot_uniform(n_hidden, 2*n_hidden, rng),
-                        glorot_uniform(n_hidden, n_hidden, rng),
-                        glorot_uniform(n_hidden, 0, rng)],
-              "b_clf": [np.zeros(n_hidden),
-                        np.zeros(n_hidden),
-                        np.ones(1)],
-              "p1": p1, "p2": p2}
-
-    return params
-
-
-def grnn_transform_simple_join(params, jets1, jets2):
-    h1 = grnn_transform_simple(params["p1"], jets1)
-    h2 = grnn_transform_simple(params["p2"], jets2)
-    h = np.hstack((h1, h2))
-
-    return h
-
-
-def grnn_predict_simple_join(params, jets1, jets2):
-    h = grnn_transform_simple_join(params, jets1, jets2)
-
-    h = relu(np.dot(params["W_clf"][0], h.T).T + params["b_clf"][0])
-    h = relu(np.dot(params["W_clf"][1], h.T).T + params["b_clf"][1])
-    h = sigmoid(np.dot(params["W_clf"][2], h.T).T + params["b_clf"][2])
-
-    return h.ravel()
-
-
 # Gated recursive activation
 
 def grnn_init_gated(n_features, n_hidden, random_state=None):

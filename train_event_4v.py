@@ -64,12 +64,15 @@ def train(filename_train,
 
     fd = open(filename_train, "rb")
 
+    # training file is assumed to be formatted a sequence of pickled pairs
+    # (e_i, y_i), where e_i is a list of (phi, eta, pt, mass) tuples.
+
     X = []
     y = []
 
     for i in range(n_events):
         v_i, y_i = pickle.load(fd)
-        v_i = v_i[:n_particles_per_event]
+        v_i = v_i[:n_particles_per_event]  # truncate to the top particles
 
         X.append(v_i)
         y.append(y_i)

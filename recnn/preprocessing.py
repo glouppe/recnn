@@ -29,6 +29,8 @@ def _pt(v):
 
 
 def permute_by_pt(jet, root_id=None):
+    # ensure that the left sub-jet has always a larger pt than the right
+
     if root_id is None:
         root_id = jet["root_id"]
 
@@ -76,6 +78,8 @@ def rewrite_content(jet):
 
 
 def extract(jet, pflow=False):
+    # per node feature extraction
+
     jet = copy.deepcopy(jet)
 
     s = jet["content"].shape
@@ -83,6 +87,7 @@ def extract(jet, pflow=False):
     if not pflow:
         content = np.zeros((s[0], 7))
     else:
+        # pflow value will be one-hot encoded
         content = np.zeros((s[0], 7+4))
 
     for i in range(len(jet["content"])):
@@ -115,6 +120,8 @@ def extract(jet, pflow=False):
 
 
 def randomize(jet):
+    # build a random tree
+
     jet = copy.deepcopy(jet)
 
     leaves = np.where(jet["tree"][:, 0] == -1)[0]
@@ -152,6 +159,8 @@ def randomize(jet):
 
 
 def sequentialize_by_pt(jet, reverse=False):
+    # transform the tree into a sequence ordered by pt
+
     jet = copy.deepcopy(jet)
 
     leaves = np.where(jet["tree"][:, 0] == -1)[0]
