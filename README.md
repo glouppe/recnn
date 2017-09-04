@@ -46,7 +46,7 @@ Classification of W vs QCD jets:
 
 ```
 # Training
-python train.py data/w-vs-qcd/antikt-kt-train.pickle model.pickle
+python train.py data/w-vs-qcd/final/antikt-kt-train.pickle model.pickle
 
 # Test
 # see notebooks/04-jet-study.ipynb
