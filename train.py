@@ -5,7 +5,7 @@ import numpy as np
 import logging
 import pickle
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import RobustScaler
 from sklearn.utils import check_random_state

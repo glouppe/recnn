@@ -1,7 +1,12 @@
 import autograd.numpy as np
-from autograd.util import flatten_func
+from autograd.misc import flatten
 from sklearn.utils import check_random_state
 
+
+def flatten_func(func, example):
+    _ex, unflatten = flatten(example)
+    _func = lambda _x, *args: flatten(func(unflatten(_x), *args))[0]
+    return _func, unflatten, _ex
 
 # Batchization of the recursion
 
